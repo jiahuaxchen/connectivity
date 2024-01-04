@@ -1,0 +1,44 @@
+---
+title: "Data cleaning"
+author: "Jiahua Chen"
+date: "2023-12-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Read in data
+
+1.  Connectivity dataset
+2.  Crash 2018- 2022
+3.  Strava 2022
+4.  ACS 2020: % Total population% Hispanic, % female, % unemployment, median household income
+5.  Read in slope shapefile calculated by Colin
+6.  Street segment stress
+
+## Calculate variables
+
+1.  Calculate population density: total population/Area (km2)
+2.  Calculate weight slope
+3.  Aggregate connectivity to BG
+4.  Summarize crashes within BG
+5.  Summarize strava trips within BG
+6.  Summarize high-stress streets within BG
+
+## Prepare recipe
+
+1.  Cbind all data
+2.  Correlation matrix
+3.  Scale data
+
+## Build regression model
+
+1.  Negative binomial model
+2.  Test spatial autocorrelation
+
+## Visualization
+
+1.  summary table of regression model
+2.  interaction plot
