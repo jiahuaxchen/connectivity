@@ -2,5 +2,4 @@
 .Rhistory
 .RData
 .Ruserdata
-
-connectivity_env
+*.lock
