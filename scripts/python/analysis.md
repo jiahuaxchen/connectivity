@@ -9,4 +9,9 @@ Converting polylines into edges & nodes: https://networkx.org/documentation/stab
 
 Connectivity Algorithms: https://networkx.org/documentation/stable/reference/algorithms/connectivity.html#module-networkx.algorithms.connectivity
 
+# Simplifying Osm
+new_network shapefile is derived from achic19's script, main_file.ipynb within git@github.com:achic19/SOD.git
+The plan is perform a spatial join on this shapefile with the canbics classified osm shapefile so we can get a simplified network with canbics classifications
+
+
 
