@@ -27,8 +27,8 @@ for (p in packages){
 ## Read in
 
 ```{r class.source = 'fold-show'}
-#newest version: from Dan
-var <- st_read("../../scripts/python/outputs/connectivity_blocks.shp")
+#newest version: with end nodes
+var <- st_read("../../scripts/python/outputs/no end nodes/connectivity_blocks/connectivity_blocks.shp")
 
 #turn shp into df
 var_df <- var %>%  
@@ -56,9 +56,10 @@ connectivity_measures <- list(scale(data.frame(var_df$cnnctvt)),
 
 ```{r}
 (model.null <- glm.nb(crashes ~ offset(log(trips)), data = var_df))
+model.null.list <- list(model.null)
 ```
 
-## Full Model
+## Model with connectivity indices
 
 ```{r}
 # run models for two different connectivity measure
@@ -74,7 +75,7 @@ for (i in seq_along(connectivity_measures)) {
   new_model_conn <- glm.nb(crashes ~ . -trips + offset(log(trips)),data = df)
   # model for all variables
   df <- cbind(current_measure,common_var)
-  new_model_all <- glm.nb(crashes ~ . -trips + offset(log(trips)),data = df)
+  new_model_all <- glm.nb(crashes ~ . -trips -prc_low + offset(log(trips)),data = df)
   # append model results to the list for making tables
   model_results_conn <- list.append(model_results_conn,new_model_conn)
   model_results_all <- list.append(model_results_all,new_model_all)
@@ -122,11 +123,14 @@ Notes: for model 2&3, might need to remove percentage_low_stress from the formul
 # interaction only for significant connectivity measures
 # for now pfb_cnnctvt, b_gamma, ls_cover
 model_results_int_sig <- list()
-connectivity_measures_sig <- c("var_df.cnnctvt", "var_df.b_gamma", "var_df.ls_cover")
+connectivity_measures_sig <- c("var_df.cnnctvt","var_df.ls_net_den","var_df.ls_cover")
 for (i in seq_along(connectivity_measures)) {
   current_measure <- connectivity_measures[[i]]
   df <- cbind(current_measure,common_var)
-  formula <- as.formula(paste("crashes ~. -trips + offset(log(trips)) +",
+  if (i==2){
+    next
+  }
+  formula <- as.formula(paste("crashes ~. -trips -prc_low + offset(log(trips)) +",
     paste("phisp", connectivity_measures_sig[i], sep = "*")))
   new_model_int <- glm.nb(formula = formula,data = df)
   # append model results to the list for making tables
@@ -141,13 +145,15 @@ model_results_int <- list()
 for (i in seq_along(connectivity_measures)) {
   current_measure <- connectivity_measures[[i]]
   df <- cbind(current_measure,common_var)
-  formula <- as.formula(paste("crashes ~. -trips + offset(log(trips)) +",
+  formula <- as.formula(paste("crashes ~. -trips -prc_low + offset(log(trips)) +",
     paste("phisp", colnames(connectivity_measures[[i]]), sep = "*",collapse = "+")))
   new_model_int <- glm.nb(formula = formula,data = df)
   # append model results to the list for making tables
   model_results_int <- list.append(model_results_int,new_model_int)
 }
 modelsummary(model_results_int,stars = TRUE)
+
+
 
 ```
 
@@ -177,3 +183,12 @@ For model with interaction of %Hispanic with all connectivity measures, among th
 1.  Model1-PFB: not significant
 2.  Model2-bike_network: phisp\*gamma (+), phisp\*coverage(+)
 3.  Model3-low_stress_network: phisp\*intersection_density (-)
+
+## Output
+
+```{r}
+all_model <- c(model.null.list,model_results_conn,model_results_all,model_results_int_all)
+
+#modelsummary(all_model,stars = TRUE,"result_tables/result_table_withnodes.docx")
+modelsummary(all_model,stars = TRUE,"result_tables/result_table_nonodes.docx")
+```
