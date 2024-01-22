@@ -1,7 +1,7 @@
 library(sf)
 
 # Load road network data
-road_network <- st_read("../../data/slope/slope.shp") 
+road_network <- st_read("../data/slope/slope.shp") 
 
 # Load polygon data
 polygons <- big
@@ -48,6 +48,6 @@ st_write(big_combined, "output/sb_goleta_v2_allbg/sb_goleta_v2_10.shp")
 
 #### map visualization
 ggplot() +
-  geom_sf(data = SBC_bg, aes(fill = "crashes"), color = NA) +
-  scale_fill_distiller(palette = "PuOr", direction = -1) +
+  geom_sf(data = var_block, aes(fill=Point_Coun))+
+  scale_fill_distiller(palette = "Spectral",direction=-1) +
   theme_void()

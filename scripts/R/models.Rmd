@@ -102,17 +102,29 @@ ggplot() +
 
 ```{r}
 block <- var_block %>% 
-  dplyr::select(BLOCKID10,POP10,OVERALL_SC,sum_total_,sum_allroa,Point_Coun) %>% 
+  dplyr::select(BLOCKID10,POP10,OVERALL_SC,sum_total_,sum_allroa,Point_Coun,slope,Shape_Area) %>%
+  scale(OVERALL_SC,POP10,slope,Shape_Area) %>% 
   drop_na(sum_total_) %>% 
   filter(sum_total_!=0) %>% 
+  mutate(rate=Point_Coun/sum_total_) %>% 
   st_drop_geometry
 
-model.block <- glm.nb(Point_Coun ~ OVERALL_SC + offset(log(sum_total_)), data = block)
+model.block <- glm.nb(Point_Coun ~ OVERALL_SC + slope + Shape_Area + sum_total_, data = block)
 
 summary(model.block)
 
-cor.test(var_block$Point_Coun,var_block$OVERALL_SC)
+cor.test(block$rate,block$OVERALL_SC)
+
+install.packages("ggpubr")
+library(ggpubr)
+ggscatter(block, x = "rate", y = "Point_Coun")
+   #color = "cyl", shape = "cyl",
+   #palette = c("#00AFBB", "#E7B800", "#FC4E07"),
+   #ellipse = TRUE, mean.point = TRUE,
+   #star.plot = TRUE))
 ```
+
+"
 
 # **Neighborhood level**
 
