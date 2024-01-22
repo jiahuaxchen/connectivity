@@ -68,13 +68,15 @@ model.null.list <- list(model.null)
 library(rlist)
 model_results_conn <- list()
 model_results_all <- list()
+df_list <- list()
 for (i in seq_along(connectivity_measures)) {
   current_measure <- connectivity_measures[[i]]
   # model for only offset + connectivity measures
-  df <- data.frame(current_measure,"trips"=common_var$trips,"crashes"=common_var$crashes)
+  df <- data.frame(current_measure,"trips"=common_var$trips,"crashes"=common_var$crashes, "slope" =common_var$slope, "area" = common_var$are_km2)
   new_model_conn <- glm.nb(crashes ~ . -trips + offset(log(trips)),data = df)
   # model for all variables
   df <- cbind(current_measure,common_var)
+  df_list <- list.append(df_list,df)
   new_model_all <- glm.nb(crashes ~ . -trips -prc_low + offset(log(trips)),data = df)
   # append model results to the list for making tables
   model_results_conn <- list.append(model_results_conn,new_model_conn)
@@ -191,4 +193,45 @@ all_model <- c(model.null.list,model_results_conn,model_results_all,model_result
 
 #modelsummary(all_model,stars = TRUE,"result_tables/result_table_withnodes.docx")
 modelsummary(all_model,stars = TRUE,"result_tables/result_table_nonodes.docx")
+```
+
+### Plot
+
+```{r}
+#install.packages("sjmisc")
+#install.packages("sjPlot")
+library(sjmisc)
+library(sjPlot)
+
+## only connnectivity measure
+plot_model(model_results_conn[[1]])
+plot_model(model_results_conn[[2]])
+plot_model(model_results_conn[[3]])
+
+#with demography
+plot_model(model_results_all[[1]],group.terms = c(1,2,2,3,3,3,3,3,3,3))
+plot_model(model_results_all[[2]],group.terms = c(1,1,1,1,1,2,2,3,3,3,3,3,3,3))
+plot_model(model_results_all[[3]],group.terms = c(1,1,1,1,1,2,2,3,3,3,3,3,3,3))
+```
+
+```{r}
+plot_model(model_results_all[[1]], type = "eff", terms = "var_df.cnnctvt",data=df_list[[1]])
+```
+
+```{r}
+library(dplyr)
+df <- df_list[[1]] %>% dplyr::select(-prc_low)
+
+test.m <- glm.nb(crashes ~ var_df.cnnctvt + are_km2 + slope + pp_dn_2 + phisp + incm_md + unmplyd + fem_prc + vtrns_p + wht_prc + offset(log(trips)),data = df)
+
+summary(test.m)
+
+library(jtools)
+effect_plot(test.m, 
+            pred = phisp, 
+            data=df,
+            interval = TRUE,
+            plot.points = TRUE, 
+            jitter = 0.05)
+
 ```
