@@ -54,7 +54,7 @@ connectivity_measures <- list(scale(data.frame(var_df$cnnctvt)),
 
 ```
 
-# **Analysis**
+#Analysis
 
 ## Null Model
 
@@ -243,12 +243,10 @@ connectivity_measures_df <- var_df %>%
 datasummary(cnnctvt + b_net_dens + b_gamma + b_cover + b_int_dens +
               b_complex +ls_net_den + ls_gamma + ls_cover +
               ls_int_den + ls_complex ~ Mean + SD + Min +Median +
-              Max + Histogram,
-            data = connectivity_measures_df,
-            output = 'result_tables/summary_table_v3.docx')
+              Max + Histogram,data = connectivity_measures_df,output = 'result_tables/summary_table_v3.docx')
 ```
 
-### Plot
+## Coefficient Plot
 
 ```{r}
 #install.packages("sjmisc")
@@ -289,7 +287,7 @@ effect_plot(test.m,
 
 ```
 
-### Correlation graph
+## Correlation graph
 
 ```{r}
 cor_sb <- var_df %>% 
