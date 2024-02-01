@@ -28,7 +28,7 @@ for (p in packages){
 
 ```{r class.source = 'fold-show'}
 #newest version: with end nodes
-var <- st_read("../../scripts/python/outputs/no end nodes/connectivity_blocks/connectivity_blocks.shp")
+var <- st_read("../../scripts/python/outputs/connectivity_blocks/connectivity_blocks.shp")
 var_block <- st_read("../../data/block_2349_v2/block_2349.shp")
 
 #turn shp into df
