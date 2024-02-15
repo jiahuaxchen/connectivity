@@ -1,0 +1,36 @@
+---
+title: "find_outliers"
+author: "Jiahua Chen"
+date: "2024-02-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Find outliers
+
+```{r}
+boxplot(var_df$b_int_dens, main="Boxplot with Outliers")
+
+```
+
+```{r}
+drop_outliers <- var_df %>%
+  mutate(z_score = scale(ls_int_den)) %>%
+  filter(!abs(z_score) > 2)
+
+cat("Outliers with GEOID:\n")
+cat(outliers$GEOID)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

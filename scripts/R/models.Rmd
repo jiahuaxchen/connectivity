@@ -41,6 +41,10 @@ var_df[is.na(var_df)] <- 0
 
 ## Clean up
 
+```{r}
+var_df <- drop_outliers
+```
+
 ```{r class.source = 'fold-show'}
 #common variables
 common_var <- var_df %>% 
@@ -94,6 +98,16 @@ modelsummary(model_results_all,stars = TRUE)
 
 ```{r}
 list <- c(model_results_conn,model_results_all)
+modelsummary(list,
+             fmt = fmt_decimal(2, 3), 
+             exponentiate = FALSE,
+             stars = TRUE,
+             coef_rename = c( "slope" = "Slope",
+                             "are_km2" = "Area",
+                             "area" = "Area"))
+```
+
+```{r}
 modelsummary(list,
              fmt = fmt_decimal(2, 3), 
              exponentiate = FALSE,
