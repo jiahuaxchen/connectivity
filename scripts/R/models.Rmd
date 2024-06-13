@@ -13,7 +13,7 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-packages = c('sf','tidyverse','MASS',"spatialreg","spdep","modelsummary")
+packages = c('sf','tidyverse','MASS',"spatialreg","spdep","modelsummary","labelled")
 for (p in packages){
   if(!require(p, character.only = T)){
     install.packages(p)
@@ -40,10 +40,6 @@ var_df[is.na(var_df)] <- 0
 
 ## Clean up
 
-```{r}
-var_df <- drop_outliers
-```
-
 ```{r class.source = 'fold-show'}
 #common variables
 common_var <- var_df %>% 
@@ -52,12 +48,15 @@ common_var[,-c(1,2)] <- scale(common_var[,-c(1,2)]) #remove those don't need sca
 
 #three sets of connectivity measures
 connectivity_measures <- list(scale(data.frame(var_df$cnnctvt)),
-                              scale(data.frame(var_df$b_net_dens,var_df$b_gamma,var_df$b_cover,var_df$b_int_dens,var_df$b_complex)),
-                              scale(data.frame(var_df$ls_net_den,var_df$ls_gamma,var_df$ls_cover,var_df$ls_int_den,var_df$ls_complex)))
+                              scale(data.frame(var_df$b_net_dens,var_df$b_cover,var_df$b_int_dens,var_df$b_complex)),
+                              scale(data.frame(var_df$ls_net_den,var_df$ls_cover,var_df$ls_complex)))
+
+
+
 
 ```
 
-#Analysis
+# Analysis
 
 ## Null Model
 
@@ -73,6 +72,7 @@ model.null.list <- list(model.null)
 # set up for loop
 # install.packages("rlist")
 library(rlist)
+
 model_results_conn <- list()
 model_results_all <- list()
 df_list <- list()
@@ -115,8 +115,8 @@ modelsummary(list,
                              "are_km2" = "Area",
                              "area" = "Area",
                              "var_df.cnnctvt" = "Connectivity",
-                             "var_df.b_gamma" = "Connectivity",
-                             "var_df.ls_gamma" = "Connectivity",
+                             "var_df.b_gamma" = "gamma",
+                             "var_df.ls_gamma" = "gamma",
                              "var_df.b_net_den" = "Network density",
                              "var_df.b_net_dens" = "Network density",
                              "var_df.ls_net_den" = "Network density",
@@ -134,7 +134,7 @@ modelsummary(list,
                              "vtrns_p" = "% veteran",
                              "incm_md" = "Median household income",
                              "pp_dn_2" = "Population density"),
-            "result_tables/result_table_nonodes_v3.docx")
+            "result_tables/result_table_nonodes_v4.d")
 ```
 
 ### Test SAC
@@ -147,8 +147,8 @@ All model residuals have a moran'I value at significance level p \> 0.5, so no s
 weight_matrix <- poly2nb(var, row.names = var$GEOID)  # Adjust row.names to match your shapefile
 weight_listw <- nb2listw(weight_matrix, style = "W")
 moran_results <- list()
-for (i in seq_along(model_results_all)){
-  new_moran <- lm.morantest(model_results_all[[i]],weight_listw)
+for (i in seq_along(list)){
+  new_moran <- lm.morantest(list[[i]],weight_listw)
   moran_results <- list.append(moran_results,new_moran)
   print(new_moran$p.value)
 }
@@ -251,12 +251,10 @@ modelsummary(all_model,stars = TRUE,"result_tables/result_table_nonodes.docx")
 ```{r}
 connectivity_measures_df <- var_df %>% 
   st_drop_geometry() %>% 
-  dplyr::select(cnnctvt , b_net_dens , b_gamma , b_cover, b_int_dens, b_complex,ls_net_den, ls_gamma, ls_cover, ls_int_den, ls_complex)
+  dplyr::select(cnnctvt, b_gamma , b_cover, b_net_dens ,b_int_dens, b_complex, ls_gamma, ls_cover,ls_net_den, ls_int_den, ls_complex)
 
-datasummary(cnnctvt + b_net_dens + b_gamma + b_cover + b_int_dens +
-              b_complex +ls_net_den + ls_gamma + ls_cover +
-              ls_int_den + ls_complex ~ Mean + SD + Min +Median +
-              Max + Histogram,data = connectivity_measures_df,output = 'result_tables/summary_table_v4.docx')
+datasummary(cnnctvt +  b_gamma + b_cover + b_net_dens + b_int_dens + b_complex + ls_gamma + ls_cover +ls_net_den + ls_int_den + ls_complex ~ Mean + SD + Min +Median +
+              Max + Histogram,data = connectivity_measures_df)
 ```
 
 ## Coefficient Plot
@@ -283,6 +281,26 @@ plot_model(model_results_all[[1]], type = "eff", terms = "var_df.cnnctvt",data=d
 ```
 
 ```{r}
+library(sjPlot)
+library(sjlabelled)
+library(sjmisc)
+library(ggplot2)
+
+# all.models <- list()
+# all.models[[1]] <- m1
+# all.models[[2]] <- m2
+# all.models[[3]] <- m3
+model_name <- list("DA_LS","GA_B","GA_LS")
+
+
+plot_models(model_results_all[[1]],model_results_all[[2]],model_results_all[[3]],
+            show.p =TRUE,show.values=TRUE,legend.title = "Connectivity index",
+            m.labels = c("Destination Analysis-LS", "Graph Analysis-B", "Graph Analysis-LS"),
+            axis.labels = c("complexity-LS","intersection denisty-LS","network coverage-LS","gamma-LS","network density-LS","complexity-B","intersection denisty-B","network coverage-B","gamma-B","network density-B","connectivity"),
+             rm.terms = c("are_km2", "slope","pp_dn_2","phisp","incm_md","unmplyd","fem_prc","vtrns_p","wht_prc")) + theme(text = element_text(size = 20))
+```
+
+```{r}
 library(dplyr)
 df <- df_list[[1]] %>% dplyr::select(-prc_low)
 
@@ -304,12 +322,17 @@ effect_plot(test.m,
 
 ```{r}
 cor_sb <- var_df %>% 
-  dplyr::select(cnnctvt, b_net_dens,b_gamma,b_cover,b_int_dens,b_complex,ls_net_den,ls_gamma,ls_cover,ls_int_den,ls_complex) %>% 
+  dplyr::select(cnnctvt, b_gamma,b_cover,b_net_dens,b_int_dens,b_complex,ls_gamma,ls_cover,ls_net_den,ls_int_den,ls_complex,pop_dns,phisp,wht_prc,incm_md,unmplyd,fem_prc,vtrns_p) %>% 
   drop_na()
 
 cor_sb <- var_df %>% 
-  dplyr::select(phisp,incm_md,unmplyd,wht_prc,cnnctvt, b_net_dens,b_gamma,b_cover,b_int_dens,b_complex,ls_net_den,ls_gamma,ls_cover,ls_int_den,ls_complex) %>% 
+  dplyr::select(cnnctvt, b_gamma,b_cover,b_net_dens,b_int_dens,b_complex,ls_gamma,ls_cover,ls_net_den,ls_int_den,ls_complex) %>% 
   drop_na()
+
+# rename for correlation plot
+# colnames(cor_sb) <- c("DA_conn","GA_B_gam","GA_B_cov","GA_B_netD","GA_B_interD","GA_B_comp","GA_LS_gam","GA_LS_cov","GA_LS_netD","GA_LS_interD","GA_LS_comp","pop_dens","perc_hisp","perc_wht","inc_med","unemp","perc_fem","perc_vet")
+
+colnames(cor_sb) <- c("DA_conn","GA_B_gam","GA_B_cov","GA_B_netD","GA_B_interD","GA_B_comp","GA_LS_gam","GA_LS_cov","GA_LS_netD","GA_LS_interD","GA_LS_comp")
 
 # calculate correlation
 res <- cor(cor_sb)
@@ -341,13 +364,13 @@ p.mat <- cor.mtest(cor_sb)
 
 col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
 corrplot(res, method="color", col=col(200),  
-         type="upper",
+         type="lower",
          order="original", 
          addCoef.col = "black", # Add coefficient of correlation
          tl.col="black", tl.srt=45, #Text label color and rotation
          # Combine with significance
          p.mat = p.mat, sig.level = 0.05, insig = "blank", 
-         number.cex=0.75,
+         number.cex=0.5,
          # hide correlation coefficient on the principal diagonal
          diag=FALSE 
 )
